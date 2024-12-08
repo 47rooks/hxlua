@@ -30,8 +30,10 @@ private abstract Callable<T:Function>(T) to T {
 private typedef IntBool = Bool;
 #elseif cpp
 @:include("lua.hpp")
-@:native("lua_State *")
-extern class State {}
+@:native("lua_State")
+extern class NativeState {}
+
+typedef State = cpp.Pointer<NativeState>;
 
 private abstract CString(cpp.ConstCharStar) from cpp.ConstCharStar to cpp.ConstCharStar {
 	@:from static inline function fromString(s:String):CString {
