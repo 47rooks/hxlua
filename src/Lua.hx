@@ -68,15 +68,15 @@ private abstract IntBool(Int) from Int to Int {
 }
 
 private class Misc {
-	public static function writer(L:State, p:cpp.ConstStar<cpp.Void>, sz:cpp.SizeT, ud:cpp.Star<cpp.Void>):Int {
+	public static function writer(L:cpp.RawPointer<NativeState>, p:cpp.RawConstPointer<cpp.Void>, sz:cpp.SizeT, ud:cpp.Star<cpp.Void>):Int {
 		var func:(State, haxe.io.Bytes) -> Int = cast ud;
-		return func(L,haxe.io.Bytes.ofData(cpp.Pointer.fromStar(cast p).toUnmanagedArray(sz)));
+		return func(cpp.Pointer.fromRaw(L),haxe.io.Bytes.ofData(cpp.Pointer.fromRaw((cast p:cpp.RawPointer<cpp.UInt8>)).toUnmanagedArray(sz)));
 	}
 
-	public static function reader(L:State,ud:cpp.Star<cpp.Void>,sz:cpp.Star<cpp.SizeT>):cpp.ConstCharStar {
+	public static function reader(L:cpp.RawPointer<NativeState>,ud:cpp.Star<cpp.Void>,sz:cpp.RawPointer<cpp.SizeT>):cpp.ConstCharStar {
 		var func:(State)->haxe.io.Bytes = cast ud;
-		var b = func(L);
-		untyped __cpp__("*sz = {0}",b.length);
+		var b = func(cpp.Pointer.fromRaw(L));
+		sz[0] = b.length;
 		return cast cpp.Pointer.ofArray(b.getData()).constRaw;
 
 	}
@@ -273,7 +273,7 @@ extern class Lua {
 	static function cpcall<T:Dynamic>(L:State, func:LuaCFunction, ud:T):Int;
 	#if cpp
 	@:native("lua_load")
-	private static function _load(L:State, reader:cpp.Callable<(State,cpp.Star<cpp.Void>,cpp.Star<cpp.SizeT>)->cpp.ConstCharStar>, dt:cpp.Star<cpp.Void>, chunkname:CString):Int;
+	private static function _load(L:State, reader:cpp.Callable<(cpp.RawPointer<NativeState>,cpp.Star<cpp.Void>,cpp.RawPointer<cpp.SizeT>)->cpp.ConstCharStar>, dt:cpp.Star<cpp.Void>, chunkname:CString):Int;
 	static inline function load(L:State,reader:(State)->haxe.io.Bytes,chunkname:String):Int {
 		return _load(L,cpp.Callable.fromStaticFunction(Misc.reader),cast reader,chunkname);
 	}
@@ -283,9 +283,10 @@ extern class Lua {
 	#end
 	#if cpp
 	@:native("lua_dump")
-	private static function _dump(L:State,writer:cpp.Callable<(State,cpp.ConstStar<cpp.Void>,cpp.SizeT,cpp.Star<cpp.Void>)->Int>,ud:cpp.Star<cpp.Void>):Int;
+	private static function _dump(L:State,
+		writer:cpp.Callable<(cpp.RawPointer<NativeState>,cpp.RawConstPointer<cpp.Void>,cpp.SizeT,cpp.Star<cpp.Void>)->Int>,ud:cpp.Star<cpp.Void>):Int;
 	static inline function dump(L:State,writer:(State,haxe.io.Bytes)->Int):Int {
-		return _dump(L,cpp.Callable.fromStaticFunction(Misc.writer),cast writer);
+		return _dump(L,cpp.Function.fromStaticFunction(Misc.writer),cast writer);
 	}
 	#elseif hl
 	@:skipHL

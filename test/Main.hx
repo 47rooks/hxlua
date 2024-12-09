@@ -22,6 +22,7 @@ class Main {
 		Lua.pushstring(vm, "three");
 		Lua.pcall(vm, 3, 0, 1);
 		trace("closing vm");
+		Lua.dump(vm, (s, b) -> b.length);
 		Lua.close(vm);
 		Sys.println("vm closed");
 
