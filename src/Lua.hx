@@ -48,8 +48,8 @@ private abstract CString(cpp.ConstCharStar) from cpp.ConstCharStar to cpp.ConstC
 private typedef Ref<T> = cpp.Star<T>;
 
 private abstract Bytes(cpp.RawPointer<Void>) {
-@:from static function fromBytes(b:haxe.io.Bytes) {
-	return cpp.Pointer.ofArray(b.b).rawCast();
+	@:from static function fromBytes(b:haxe.io.Bytes) {
+		return cpp.Pointer.ofArray(b.b).rawCast();
 	}
 }
 
@@ -70,15 +70,14 @@ private abstract IntBool(Int) from Int to Int {
 private class Misc {
 	public static function writer(L:cpp.RawPointer<NativeState>, p:cpp.RawConstPointer<cpp.Void>, sz:cpp.SizeT, ud:cpp.Star<cpp.Void>):Int {
 		var func:(State, haxe.io.Bytes) -> Int = cast ud;
-		return func(cpp.Pointer.fromRaw(L),haxe.io.Bytes.ofData(cpp.Pointer.fromRaw((cast p:cpp.RawPointer<cpp.UInt8>)).toUnmanagedArray(sz)));
+		return func(cpp.Pointer.fromRaw(L), haxe.io.Bytes.ofData(cpp.Pointer.fromRaw((cast p : cpp.RawPointer<cpp.UInt8>)).toUnmanagedArray(sz)));
 	}
 
-	public static function reader(L:cpp.RawPointer<NativeState>,ud:cpp.Star<cpp.Void>,sz:cpp.RawPointer<cpp.SizeT>):cpp.ConstCharStar {
-		var func:(State)->haxe.io.Bytes = cast ud;
+	public static function reader(L:cpp.RawPointer<NativeState>, ud:cpp.Star<cpp.Void>, sz:cpp.RawPointer<cpp.SizeT>):cpp.ConstCharStar {
+		var func:(State) -> haxe.io.Bytes = cast ud;
 		var b = func(cpp.Pointer.fromRaw(L));
 		sz[0] = b.length;
 		return cast cpp.Pointer.ofArray(b.getData()).constRaw;
-
 	}
 }
 #else
@@ -144,9 +143,9 @@ enum abstract GcOptions(Int) {
 extern class Lua {
 	#if hl
 	@:hlNative("lua", "hl_init")
-	private static function init(t:hl.Type,t1:hl.Type):Void;
+	private static function init(t:hl.Type, t1:hl.Type):Void;
 	private static inline function __init__():Void {
-		init(hl.Type.get(((s:State) -> 0 : LuaCFunction)),hl.Type.get(haxe.io.Bytes.alloc(0)));
+		init(hl.Type.get(((s:State) -> 0 : LuaCFunction)), hl.Type.get(haxe.io.Bytes.alloc(0)));
 	}
 	#end
 
@@ -207,7 +206,7 @@ extern class Lua {
 	@:native("lua_toboolean")
 	static function toboolean(L:State, idx:Int):IntBool;
 	@:native("lua_tolstring")
-	static function tolstring(L:State, idx:Int, len:Ref<#if cpp cpp.SizeT #elseif hl Int #end>):CString;
+	static function tolstring(L:State, idx:Int, len:Ref< #if cpp cpp.SizeT #elseif hl Int #end>):CString;
 	@:native("lua_objlen")
 	static function objlen(L:State, idx:Int):#if cpp cpp.SizeT #else Int #end;
 	@:native("lua_tocfunction")
@@ -271,9 +270,11 @@ extern class Lua {
 	static function cpcall<T:Dynamic>(L:State, func:LuaCFunction, ud:T):Int;
 	#if cpp
 	@:native("lua_load")
-	private static function _load(L:State, reader:cpp.Callable<(cpp.RawPointer<NativeState>,cpp.Star<cpp.Void>,cpp.RawPointer<cpp.SizeT>)->cpp.ConstCharStar>, dt:cpp.Star<cpp.Void>, chunkname:CString):Int;
-	static inline function load(L:State,reader:(State)->haxe.io.Bytes,chunkname:String):Int {
-		return _load(L,cpp.Callable.fromStaticFunction(Misc.reader),cast reader,chunkname);
+	private static function _load(L:State,
+		reader:cpp.Callable<(cpp.RawPointer<NativeState>, cpp.Star<cpp.Void>, cpp.RawPointer<cpp.SizeT>) -> cpp.ConstCharStar>, dt:cpp.Star<cpp.Void>,
+		chunkname:CString):Int;
+	static inline function load(L:State, reader:(State) -> haxe.io.Bytes, chunkname:String):Int {
+		return _load(L, cpp.Callable.fromStaticFunction(Misc.reader), cast reader, chunkname);
 	}
 	#elseif hl
 	@:skipHL
@@ -282,13 +283,13 @@ extern class Lua {
 	#if cpp
 	@:native("lua_dump")
 	private static function _dump(L:State,
-		writer:cpp.Callable<(cpp.RawPointer<NativeState>,cpp.RawConstPointer<cpp.Void>,cpp.SizeT,cpp.Star<cpp.Void>)->Int>,ud:cpp.Star<cpp.Void>):Int;
-	static inline function dump(L:State,writer:(State,haxe.io.Bytes)->Int):Int {
-		return _dump(L,cpp.Function.fromStaticFunction(Misc.writer),cast writer);
+		writer:cpp.Callable<(cpp.RawPointer<NativeState>, cpp.RawConstPointer<cpp.Void>, cpp.SizeT, cpp.Star<cpp.Void>) -> Int>, ud:cpp.Star<cpp.Void>):Int;
+	static inline function dump(L:State, writer:(State, haxe.io.Bytes) -> Int):Int {
+		return _dump(L, cpp.Function.fromStaticFunction(Misc.writer), cast writer);
 	}
 	#elseif hl
 	@:skipHL
-	static function dump(L:State, writer:(State,haxe.io.Bytes)->Int):Int;
+	static function dump(L:State, writer:(State, haxe.io.Bytes) -> Int):Int;
 	#end
 	@:native("lua_yield")
 	static function yield(L:State, nresults:Int):ThreadStatus;
