@@ -47,9 +47,9 @@ private abstract CString(cpp.ConstCharStar) from cpp.ConstCharStar to cpp.ConstC
 
 private typedef Ref<T> = cpp.Star<T>;
 
-private abstract Bytes(cpp.Star<Void>) {
-	@:from static function fromBytes(b:haxe.io.Bytes) {
-		return cast @:privateAccess b.b;
+private abstract Bytes(cpp.RawPointer<Void>) {
+@:from static function fromBytes(b:haxe.io.Bytes) {
+	return cpp.Pointer.ofArray(b.b).rawCast();
 	}
 }
 
@@ -84,8 +84,6 @@ private class Misc {
 #else
 #error "Unsupported platform"
 #end
-// private typedef Reader = cpp.Callable<(state:State, size:Ref<Int>) -> Bytes>;
-// private typedef Writer = cpp.Callable<(state:State, data:Bytes, size:Int) -> Int>;
 typedef LuaCFunction = Callable<State->Int>;
 
 enum abstract LuaType(Int) {
