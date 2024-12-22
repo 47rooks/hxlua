@@ -33,7 +33,7 @@ private typedef IntBool = Bool;
 @:native("lua_State")
 extern class NativeState {}
 
-typedef State = cpp.Pointer<NativeState>;
+typedef State = cpp.RawPointer<NativeState>;
 
 private abstract CString(cpp.ConstCharStar) from cpp.ConstCharStar to cpp.ConstCharStar {
 	@:from static inline function fromString(s:String):CString {
@@ -49,7 +49,7 @@ private typedef Ref<T> = cpp.Star<T>;
 
 private abstract Bytes(cpp.RawPointer<Void>) {
 	@:from static function fromBytes(b:haxe.io.Bytes) {
-		return cpp.Pointer.ofArray(b.b).rawCast();
+		return cast (cpp.Pointer.ofArray(b.getData()).rawCast() : cpp.RawPointer<Void>);
 	}
 }
 
@@ -70,12 +70,12 @@ private abstract IntBool(Int) from Int to Int {
 private class Misc {
 	public static function writer(L:cpp.RawPointer<NativeState>, p:cpp.RawConstPointer<cpp.Void>, sz:cpp.SizeT, ud:cpp.Star<cpp.Void>):Int {
 		var func:(State, haxe.io.Bytes) -> Int = cast ud;
-		return func(cpp.Pointer.fromRaw(L), haxe.io.Bytes.ofData(cpp.Pointer.fromRaw((cast p : cpp.RawPointer<cpp.UInt8>)).toUnmanagedArray(sz)));
+		return func(L, haxe.io.Bytes.ofData(cpp.Pointer.fromRaw((cast p : cpp.RawPointer<cpp.UInt8>)).toUnmanagedArray(sz)));
 	}
 
 	public static function reader(L:cpp.RawPointer<NativeState>, ud:cpp.Star<cpp.Void>, sz:cpp.RawPointer<cpp.SizeT>):cpp.ConstCharStar {
 		var func:(State) -> haxe.io.Bytes = cast ud;
-		var b = func(cpp.Pointer.fromRaw(L));
+		var b = func(L);
 		sz[0] = b.length;
 		return cast cpp.Pointer.ofArray(b.getData()).constRaw;
 	}
